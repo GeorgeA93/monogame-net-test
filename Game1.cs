@@ -69,6 +69,28 @@ public class Game1 : Game
         base.Initialize();
 
         SteamClient.Init(1442410, false);
+        SteamNetworkingUtils.OnDebugOutput += (output, str) => {
+            Console.WriteLine(str);
+        };
+        Steamworks.Dispatch.OnDebugCallback = (type, str, server) => {
+            Console.WriteLine( $"[Callback {type} {(server ? "server" : "client")}]" );
+			Console.WriteLine( str );
+			Console.WriteLine( $"" );
+        };
+        Steamworks.Dispatch.OnException = (e) =>
+        {
+            Console.Error.WriteLine( e.Message );
+			Console.Error.WriteLine( e.StackTrace );
+            throw e;
+        };
+        SteamNetworkingUtils.DebugLevel = NetDebugOutput.Everything;
+        SteamNetworkingUtils.DebugLevelP2PRendezvous = 8;
+        SteamNetworkingUtils.DebugLevelMessage = 8;
+        SteamNetworkingUtils.DebugLevelSDRRelayPings = 8;
+        SteamNetworkingUtils.DebugLevelAckRTT = 8;
+        SteamNetworkingUtils.DebugLevelPacketDecode = 8;
+        SteamNetworkingUtils.DebugLevelPacketGaps = 8;
+
         SteamNetworkingUtils.InitRelayNetworkAccess();
     }
 
@@ -108,11 +130,6 @@ public class Game1 : Game
 
                 Console.WriteLine("Connecting to server");
                 client = SteamNetworkingSockets.ConnectRelay<Client>(Steamworks.SteamClient.SteamId);
-                //TODO: SteamNetworking.OnP2PConnectionFailed
-            }
-            else
-            {
-                Console.WriteLine("Not connected to relay - waiting to start server.");
             }
         }
 
