@@ -70,14 +70,25 @@ public class Game1 : Game
 
         SteamClient.Init(1442410, false);
         SteamNetworkingUtils.InitRelayNetworkAccess();
-        server = SteamNetworkingSockets.CreateRelaySocket<Server>();
-        client = SteamNetworkingSockets.ConnectRelay<Client>(Steamworks.SteamClient.SteamId);
     }
 
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
+    }
 
+    protected override void UnloadContent()
+    {
+        base.UnloadContent();
+        if (server != null)
+        {
+            server.Close();
+        }
+        if (client != null)
+        {
+            client.Close();
+        }
+        SteamClient.Shutdown();
     }
 
     protected override void Update(GameTime gameTime)
@@ -86,8 +97,33 @@ public class Game1 : Game
             Exit();
 
         SteamClient.RunCallbacks();
-        server.Receive();
-        client.Receive();
+
+        if (server == null)
+        {
+            if (SteamNetworkingUtils.Status == SteamNetworkingAvailability.Current)
+            {
+                Console.WriteLine("Connected to steam relay - starting server");
+                server = SteamNetworkingSockets.CreateRelaySocket<Server>();
+                Console.WriteLine("Started server");
+
+                Console.WriteLine("Connecting to server");
+                client = SteamNetworkingSockets.ConnectRelay<Client>(Steamworks.SteamClient.SteamId);
+                //TODO: SteamNetworking.OnP2PConnectionFailed
+            }
+            else
+            {
+                Console.WriteLine("Not connected to relay - waiting to start server.");
+            }
+        }
+
+        if (server != null)
+        {
+            server.Receive();
+        }
+        if (client != null)
+        {
+            client.Receive();
+        }
 
         base.Update(gameTime);
     }
